@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mushaf-scan-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - server/**
+        - render.yaml
+    envVars:
+      - key: GOOGLE_VISION_API_KEY
+        sync: false

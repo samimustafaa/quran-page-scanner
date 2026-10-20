@@ -1,0 +1,50 @@
+name: Mobile OTA update
+on:
+  push:
+    branches: [main]
+    paths: ["App.tsx", "src/**", "assets/**", "package.json", "package-lock.json", "app.config.ts", "project.config.json"]
+  workflow_dispatch:
+    inputs:
+      channel:
+        type: choice
+        options: [preview, production]
+        default: preview
+        description: Update channel (test preview first)
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Expo configuration
+        id: config
+        shell: bash
+        run: |
+          if [ -z "$EXPO_TOKEN" ] || [ -z "$EXPO_PUBLIC_API_URL" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping OTA publication until EXPO_TOKEN and EXPO_PUBLIC_API_URL are configured."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.config.outputs.ready == 'true' 
+        with:
+          node-version: 24
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        if: steps.config.outputs.ready == 'true' 
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+        if: steps.config.outputs.ready == 'true'
+      - run: npm run typecheck
+        if: steps.config.outputs.ready == 'true'
+      - if: steps.config.outputs.ready == 'true'
+        run: eas update --channel "${{ inputs.channel || 'production' }}" --message "Mobile update $GITHUB_SHA" --environment "${{ inputs.channel || 'production' }}" --non-interactive
+        env:
+          EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}

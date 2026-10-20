@@ -1,0 +1,10 @@
+{
+  "source": "https://api.alquran.cloud/v1",
+  "arabic": "quran-uthmani",
+  "translation": "sq.ahmeti",
+  "translator": "Sherif Ahmeti",
+  "retrieved": "2026-10-20",
+  "sha256": "ac050d0cc913180d522ea4ca10d7acde0153d2eba00e45f9c857a4b61005f58e",
+  "pages": 604,
+  "ayahs": 6236
+}
